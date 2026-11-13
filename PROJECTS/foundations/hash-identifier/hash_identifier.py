@@ -51,6 +51,8 @@ What this file exposes
   main()                 — CLI entry point used by `hashid <hash>`
 """
 
+import json
+
 # Standard library: parse command-line flags like `--top 3` into a
 # nice object so we do not have to slice `sys.argv` by hand.
 import argparse
@@ -61,7 +63,7 @@ import sys
 
 # Standard library: a decorator that turns a class into a small,
 # immutable data record without writing `__init__` boilerplate.
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 # Standard library: a type hint that pins a value to a small fixed
 # set of strings (here: "high" / "medium" / "low"). Mypy catches typos.
@@ -115,6 +117,8 @@ class HashCandidate:
     algorithm: str
     confidence: Confidence
     reason: str
+    hashcat_mode: int | None = None
+
 
 
 # =============================================================================
@@ -145,6 +149,7 @@ PREFIX_RULES: list[tuple[str, str, str]] = [
     ("$6$", "SHA-512 crypt", "Unix crypt(3) using SHA-512 (default on Linux)"),
     ("$5$", "SHA-256 crypt", "Unix crypt(3) using SHA-256"),
     ("$1$", "MD5 crypt", "Unix crypt(3) using MD5 (legacy, weak)"),
+    ("$sha1$", "sha1crypt", "rare crypt(3) variant"),
 
     # Apache htpasswd MD5 variant — same MD5 family as $1$ above but
     # with Apache's own salt-handling tweak. This is the format that
@@ -224,6 +229,22 @@ HEX_LENGTH_RULES: dict[int, list[str]] = {
     96: ["SHA-384", "SHA3-384"],
     # 128 hex chars = 64 bytes = 512 bits
     128: ["SHA-512", "SHA3-512", "BLAKE2b-512", "Whirlpool"],
+}
+HASHCAT_MODES: dict[str, int] = {
+    "MD5": 0,
+    "MD4": 900,
+    "SHA-1": 100,
+    "SHA-256": 1400,
+    "SHA-512": 1700,
+    "NTLM": 1000,
+    "bcrypt": 3200,
+    "DES crypt": 1500,
+    "MD5 crypt": 500,
+    "SHA-256 crypt": 7400,
+    "SHA-512 crypt": 1800,
+    "phpass": 400,
+    "NetNTLMv1": 5500,
+    "NetNTLMv2": 5600,
 }
 
 
@@ -481,6 +502,7 @@ def identify(raw_input: str) -> list[HashCandidate]:
                     algorithm = algorithm,
                     confidence = confidence,
                     reason = f"{len(text)} hex chars — {label}",
+                    hashcat_mode = HASHCAT_MODES.get(algorithm),
                 )
             )
         return candidates
@@ -590,6 +612,11 @@ def _build_argument_parser() -> argparse.ArgumentParser:
         default = 5,
         help = "Show at most this many candidates (default: 5).",
     )
+    parser.add_argument(
+        "--json",
+        action = "store_true",
+        help = "Output result as JSON instead of a table"
+    )
     return parser
 
 
@@ -658,16 +685,22 @@ def main() -> int:
         )
         return 1
 
+    if args.json:
+        data = [asdict(candidate) for candidate in candidates]
+        print(json.dumps(data, indent = 2))
+        return 0
+
     # Trim to the requested top-N
     trimmed = candidates[: args.top]
     _render_table(args.hash, trimmed, console)
 
     # Helpful nudge — point the user at the cracker once they know
     # what algorithm to target. Foundations tier is meant to chain
-    if trimmed[0].confidence == "high":
+    top = trimmed[0]
+    if top.hashcat_mode is not None:
         console.print(
-            "\n[dim]Next step: try the matching cracker mode "
-            "(see ../../beginner/hash-cracker).[/dim]"
+            f"\n[dim]Next step: hashcat -m {top.hashcat_mode} -a 0 "
+            f"'{args.hash}' wordlist.txt[/dim]"
         )
 
     return 0

@@ -112,12 +112,12 @@ def test_argon2id_prefix_is_recognized() -> None:
     Argon2id PHC strings begin with `$argon2id$`
     """
     # PHC format for Argon2id: $argon2id$v=<version>$m=...,t=...,p=...$<salt>$<hash>
-    sample = "$argon2id$v=19$m=65536,t=3,p=4$c2FsdHNhbHQ$aGFzaA"
-    candidates = identify(sample)
     # `any(...)` returns True if at least one element of the iterable
     # makes the inner expression true. We check that AT LEAST ONE
     # candidate is Argon2id — using any() instead of [0] keeps the test
     # robust if we ever add a second guess to the same prefix
+    sample = "$argon2id$v=19$m=65536,t=3,p=4$c2FsdHNhbHQ$aGFzaA"
+    candidates = identify(sample)
     assert any(c.algorithm == "Argon2id" for c in candidates)
 
 
@@ -125,11 +125,20 @@ def test_sha512_crypt_prefix_is_recognized() -> None:
     """
     `$6$` is the marker for SHA-512 crypt — what /etc/shadow uses on Linux
     """
-    sample = "$6$rounds=10000$salt$hashedpasswordhere"
-    candidates = identify(sample)
+
     # `[0]` because we want the TOP candidate. If anything else was
     # ranked first, this assertion would fail loudly
+    sample = "$6$rounds=10000$salt$hashedpasswordhere"
+    candidates = identify(sample)
     assert candidates[0].algorithm == "SHA-512 crypt"
+
+def test_sha1crypt_prefix_is_recognized() -> None:
+    """
+    sha1crypt strings begin with `$sha1$`
+    """
+    sample = "$sha1$whatever"
+    candidates = identify(sample)
+    assert any(c.algorithm == "sha1crypt" for c in candidates)
 
 
 def test_django_pbkdf2_prefix_is_recognized() -> None:
