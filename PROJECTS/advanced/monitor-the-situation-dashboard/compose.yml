@@ -7,7 +7,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: conf/docker/prod/vite.docker
+      dockerfile: conf/docker/prod/vite.dockerfile
     container_name: situation-monitor-prod-nginx
     ports:
       - "${NGINX_HOST_PORT:-8432}:80"
@@ -25,12 +25,12 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-    restart: unless-stopped
+    restart: always
 
   backend:
     build:
       context: .
-      dockerfile: conf/docker/prod/go.docker
+      dockerfile: conf/docker/prod/go.dockerfile
     container_name: situation-monitor-prod-backend
     expose:
       - "8080"
@@ -61,10 +61,10 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-    restart: unless-stopped
+    restart: always
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: situation-monitor-prod-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-monitor}
@@ -88,7 +88,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    restart: unless-stopped
+    restart: always
 
   redis:
     image: redis:7-alpine
@@ -111,7 +111,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: always
 
 networks:
   frontend:

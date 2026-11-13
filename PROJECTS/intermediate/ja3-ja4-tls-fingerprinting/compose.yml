@@ -16,7 +16,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: infra/docker/vite.prod
+      dockerfile: infra/docker/vite.prod.dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL:-/api}
         - VITE_APP_TITLE=${VITE_APP_TITLE:-JA3/JA4 TLS Fingerprinting}
@@ -33,12 +33,12 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-    restart: unless-stopped
+    restart: always
 
   tlsfp:
     build:
       context: .
-      dockerfile: infra/docker/tlsfp.prod
+      dockerfile: infra/docker/tlsfp.prod.dockerfile
     container_name: ${APP_NAME:-tlsfp}-backend
     # Demo posture: seed the bundled corpus, then serve while replaying a
     # vendored capture on a loop so the dashboard is alive the moment it boots.
@@ -65,7 +65,7 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-    restart: unless-stopped
+    restart: always
 
 networks:
   app:

@@ -3,7 +3,7 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: chat-postgres-dev
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-chat_auth}
@@ -23,7 +23,7 @@ services:
       retries: 5
 
   surrealdb:
-    image: surrealdb/surrealdb:v3.0.5
+    image: surrealdb/surrealdb:v3.3.5
     container_name: chat-surrealdb-dev
     user: "0:0"
     command: start --log trace --user root --pass ${SURREAL_PASSWORD:?SURREAL_PASSWORD required} rocksdb:/data/database.db
@@ -67,7 +67,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: conf/docker/dev/fastapi.docker
+      dockerfile: conf/docker/dev/fastapi.dockerfile
     container_name: chat-backend-dev
     environment:
       ENV: ${ENV:-development}
@@ -104,7 +104,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: conf/docker/dev/vite.docker
+      dockerfile: conf/docker/dev/vite.dockerfile
     container_name: chat-frontend-dev
     environment:
       - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}

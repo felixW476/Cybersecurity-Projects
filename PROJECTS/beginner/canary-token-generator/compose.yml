@@ -13,7 +13,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: infra/docker/vite.prod
+      dockerfile: infra/docker/vite.prod.dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL:-/api}
         - VITE_APP_TITLE=${VITE_APP_TITLE:-Canary Token Generator}
@@ -34,12 +34,12 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-    restart: unless-stopped
+    restart: always
 
   canary:
     build:
       context: ./backend
-      dockerfile: ../infra/docker/canary.prod
+      dockerfile: ../infra/docker/canary.prod.dockerfile
     container_name: ${APP_NAME:-canary-token-generator}-canary
     environment:
       - APP_ENVIRONMENT=production
@@ -79,7 +79,7 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-    restart: unless-stopped
+    restart: always
 
   postgres:
     image: postgres:18-alpine
@@ -101,7 +101,7 @@ services:
       resources:
         limits:
           memory: 512M
-    restart: unless-stopped
+    restart: always
 
   redis:
     image: redis:7-alpine
@@ -120,7 +120,7 @@ services:
       resources:
         limits:
           memory: 128M
-    restart: unless-stopped
+    restart: always
 
 networks:
   app:

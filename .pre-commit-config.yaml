@@ -4,7 +4,7 @@ repos:
   # .github/workflows/lint.yml reads it from this file so CI and the
   # local hook can never lint with two different rule sets.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
+    rev: v0.17.3
     hooks:
       # Beginner projects
       - id: ruff
@@ -191,6 +191,14 @@ repos:
         entry: bash -c 'cd PROJECTS/advanced/monitor-the-situation-dashboard/backend && golangci-lint run --fix'
         language: system
         files: ^PROJECTS/advanced/monitor-the-situation-dashboard/backend/
+        types: [go]
+        pass_filenames: false
+
+      - id: golangci-lint-chaos-engineering-tool
+        name: golangci-lint (chaos-engineering-tool)
+        entry: bash -c 'cd PROJECTS/intermediate/chaos-engineering-tool && golangci-lint run --fix'
+        language: system
+        files: ^PROJECTS/intermediate/chaos-engineering-tool/
         types: [go]
         pass_filenames: false
 
